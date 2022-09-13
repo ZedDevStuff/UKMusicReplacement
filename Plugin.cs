@@ -17,7 +17,7 @@ namespace UKMusicReplacement
 {
     [BepInPlugin("zed.uk.musicreplacement", "Ultrakill Music Replacement", "0.7.0")]
     [BepInProcess("ULTRAKILL.exe")]
-    [BepInDependency("zed.uk.uihelper",">= 0.7.0")]
+    [BepInDependency("zed.uk.uihelper")]
     public class Plugin : BaseUnityPlugin
     {
         GameObject menuCanvas,menu,menuButton,toggleTemplate;
