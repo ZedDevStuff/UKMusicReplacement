@@ -15,24 +15,23 @@ using UKUIHelper;
 
 namespace UKMusicReplacement
 {
-    [BepInPlugin("zed.uk.musicreplacement", "Ultrakill Music Replacement", "0.6.0")]
+    [BepInPlugin("zed.uk.musicreplacement", "Ultrakill Music Replacement", "0.7.0")]
     [BepInProcess("ULTRAKILL.exe")]
-    [BepInDependency("zed.uk.uihelper",BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("zed.uk.uihelper",">= 0.7.0")]
     public class Plugin : BaseUnityPlugin
     {
         GameObject menuCanvas,menu,menuButton,toggleTemplate;
         List<GameObject> toggles = new List<GameObject>();
         MusicManager music;
         ConfigEntry<bool> isEnabled;
-        Dictionary<string,ConfigEntry<bool>> musicEntries = new Dictionary<string, ConfigEntry<bool>>();
-        Dictionary<string,bool> musicDict = new Dictionary<string, bool>();
-
+        Dictionary<string,List<string>> songPackDict = new Dictionary<string, List<string>>();
+        Dictionary<string,ConfigEntry<string>> configs = new Dictionary<string, ConfigEntry<string>>();
+        Dictionary<string,string> currentSongPackDict = new Dictionary<string, string>();
         bool changedSong = false;
-        bool isMenuOpen,isModEnabled;
+        bool isMenuOpen,isModEnabled,firstInit = true;
         string workDir;
         private void Awake()
         {
-            
             isEnabled = Config.Bind("General", "Enabled", true, "Enable/Disable the plugin");
             isModEnabled = isEnabled.Value;
             if(isEnabled.Value)
@@ -41,7 +40,67 @@ namespace UKMusicReplacement
                 workDir = Path.GetDirectoryName(System.Reflection.Assembly.GetAssembly(typeof(Plugin)).Location);
                 SceneManager.sceneLoaded += CheckScene;
             }
-            
+            InitDict();
+            Logger.LogInfo("Built Dict");
+        }
+        void InitDict()
+        {
+            songPackDict.Clear();
+            int l = 0;
+            int le = 1;
+            for(int i = 0;i < 25;i++)
+            {
+                string name;
+                bool reset = false;
+                if(l == 0 && le == 5)
+                {
+                    reset = true;
+                }
+                else if(le == 2 && (l == 3 || l == 6 || l == 9))
+                {
+                    reset = true;
+                }
+                else if(le == 4 && l != 0)
+                {
+                    reset = true;
+                }
+                name = ($"{l}-{le}");
+                songPackDict.Add($"{l}-{le}",new List<string>());
+                if(firstInit)
+                {
+                    if(name == "4-1" || name == "4-2")
+                    {
+                        configs[name] = Config.Bind($"Music {name}", "Current music", "Example", $"Sound pack used for {name}");
+                    }
+                    else configs[name] = Config.Bind($"Music {name}", "Current music", "None", $"Sound pack used for {name}");
+                } 
+                if(reset)
+                {
+                    l++;
+                    le = 1;
+                }
+                else le++;
+            }
+            firstInit = false;
+        }
+        void Update()
+        {
+            if(Input.GetKeyDown(KeyCode.F1))
+            {
+                Logger.LogInfo(MusicManager.Instance.cleanTheme.clip.name);
+            }
+            if(Input.GetKeyDown(KeyCode.F2))
+            {
+                Logger.LogInfo(MusicManager.Instance.battleTheme.clip.name);
+            }
+            if(Input.GetKeyDown(KeyCode.F3))
+            {
+                Logger.LogInfo(MusicManager.Instance.bossTheme.clip.name);
+            }
+            if(Input.GetKeyDown(KeyCode.F4))
+            {
+                Logger.LogInfo(MusicManager.Instance.targetTheme.clip.name);
+            }
         }
         
         void CheckScene(Scene scene,LoadSceneMode mode)
@@ -60,7 +119,7 @@ namespace UKMusicReplacement
                 else
                 {
                     Directory.CreateDirectory(workDir + "\\CustomMusic");
-                    File.WriteAllText(workDir + "\\CustomMusic\\readme.txt","To add custom songs, create a folder with the level name (i.e \"2-1\") and put your files in.\nRename hem to \"clean\" and \"battle\" to make sure they are loaded correctly.\nAudio files need to be in .ogg, .mp3 or .wav to work.");
+                    File.WriteAllText(workDir + "\\CustomMusic\\readme.txt","To add custom songs, create a folder with the name of your sound pack then another with the level name (i.e \"2-1\") and put your files in.\nRename them to \"clean\" and \"battle\" to make sure they are loaded correctly.\nAudio files need to be in .ogg, .mp3 or .wav to work.");
                 } 
             }
             else if(name.Contains("Menu"))
@@ -106,7 +165,7 @@ namespace UKMusicReplacement
             menu.GetComponent<RectTransform>().pivot = new Vector2(0.5f,0.5f);
             menu.GetComponent<RectTransform>().anchoredPosition = new Vector2(0,0);
             menu.GetComponent<RectTransform>().SetAnchor(AnchorPresets.StretchAll);
-            menu.GetComponent<RectTransform>().SetRect(new Rect4(50,50,450,450));
+            menu.GetComponent<RectTransform>().SetRect(new Rect4(50,50,200,200));
             menu.GetComponent<Image>().color = new Color(1,1,1,1);
             menu.SetActive(false);
 
@@ -165,12 +224,12 @@ namespace UKMusicReplacement
             toggleTemplate.GetComponent<Text>().alignment = TextAnchor.MiddleLeft;
             toggleTemplate.GetComponent<Text>().color = Color.black;
 
-            GameObject toggleTemplateToggle = UIHelper.CreateToggle();
-            toggleTemplateToggle.GetComponent<RectTransform>().SetParent(toggleTemplate.GetComponent<RectTransform>());
-            toggleTemplateToggle.GetComponent<RectTransform>().SetAnchor(AnchorPresets.MiddleRight);
-            toggleTemplateToggle.GetComponent<RectTransform>().SetPivot(PivotPresets.MiddleRight);
-            toggleTemplateToggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(0,0);
-            toggleTemplateToggle.GetComponent<RectTransform>().sizeDelta = new Vector2(10,10);
+            GameObject dp = UIHelper.CreateDropdown();
+            dp.name = "Dropdown";
+            dp.GetComponent<RectTransform>().SetParent(toggleTemplate.GetComponent<RectTransform>());
+            dp.GetComponent<RectTransform>().SetAnchor(AnchorPresets.MiddleLeft);
+            dp.GetComponent<RectTransform>().anchoredPosition = new Vector2(140,0);
+            dp.GetComponent<Dropdown>().options = new List<Dropdown.OptionData>() {new Dropdown.OptionData("None")};
 
             Logger.LogInfo("Created mod menu");
             RefreshMenu();
@@ -178,152 +237,178 @@ namespace UKMusicReplacement
         }
         void RefreshMenu()
         {
+            InitDict();
             foreach(GameObject go in toggles)
             {
                 Destroy(go);
             }
             toggles.Clear();
-            string[] potentialSongs = Directory.GetDirectories(workDir + "\\CustomMusic");
-            List<string> songs = new List<string>();
-            foreach(string potentialSong in potentialSongs)
+            string[] potentialSongPacks = Directory.GetDirectories(workDir + "\\CustomMusic");
+            foreach(string potentialSongPack in potentialSongPacks)
             {
-                if(Directory.EnumerateFiles(potentialSong).Any(file => file.EndsWith(".ogg") || file.EndsWith(".mp3") || file.EndsWith(".wav")))
+                foreach(string potentialSong in Directory.GetDirectories(potentialSongPack))
                 {
-                    songs.Add(potentialSong);
+                    if(Directory.EnumerateFiles(potentialSong).Any(file => file.EndsWith(".ogg") || file.EndsWith(".mp3") || file.EndsWith(".wav")))
+                    {
+                        string song = new DirectoryInfo(potentialSong).Name;
+                        string pack = new DirectoryInfo(potentialSongPack).Name;
+                        if(!songPackDict[song].Contains(pack)) songPackDict[song].Add(pack);
+                    }
                 }
             }
-            int current = 0;
             int check = 0;
-            musicEntries.Clear();
-            foreach(string song in songs)
+            int layer = 0;
+            int level = 1;
+            int current = 0;
+            for(int i = 1;i < 26;i++)
             {
-                if(current == 10)
+                bool reset = false;
+                if(i == 10 || i == 20 || i == 30)
                 {
                     check++;
                     current = 0;
                 }
-                else if(current == 20)
+                if(layer == 0 && level == 5)
                 {
-                    check++;
-                    current = 0;
+                    reset = true;
                 }
-                string name = new DirectoryInfo(song).Name;
-                ConfigEntry<bool> cfg;
-                cfg = Config.Bind("Music " + name, "Enabled", true, "Enable/Disable music in " + name);
-                bool val = true;
-                if(musicDict.ContainsKey(name))
+                else if(level == 2 && (layer == 3 || layer == 6 || layer == 9))
                 {
-                    val = musicDict[name];
+                    reset = true;
                 }
-                else
+                else if(level == 4 && layer != 0)
                 {
-                    musicDict.Add(name, cfg.Value);
-                    val = cfg.Value;
+                    reset = true;
                 }
-                musicEntries.Add(name,cfg);
+                string name = $"{layer}-{level}";
+                currentSongPackDict[name] = configs[name].Value;
+                //string val = "None";
+                // TODO: Check and restore previous settings
+                
                 GameObject toggle = Instantiate(toggleTemplate);
                 toggle.name = name;
                 toggle.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
-                toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (100 * check),-150 - (current * 50));
-                toggle.GetComponent<Text>().text = new DirectoryInfo(song).Name;
-                toggle.GetComponentInChildren<Toggle>().gameObject.name = name;
-                toggle.GetComponentInChildren<Toggle>().isOn = val;
-                toggle.GetComponentInChildren<Toggle>().onValueChanged.AddListener((bool value) => ToggleMusic(value));
+                toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check),-150 - (current * 50));
+                toggle.GetComponent<Text>().text = name;
                 toggle.GetComponentInChildren<Image>().color = new Color32(200,200,200,255);
+                Dropdown dp = toggle.GetComponentInChildren<Dropdown>();
+                dp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate {ToggleMusic(dp);});;
+                dp.name = name;
+                if(songPackDict[name].Count > 0)
+                {
+                    foreach(string data in songPackDict[name])
+                    {
+                        dp.options.Add(new Dropdown.OptionData(data));
+                    }
+                }
+                bool exists = false;
+                for(int j = 0;j < dp.options.Count;j++)
+                {
+                    if(dp.options[j].text == configs[name].Value)
+                    {
+                        exists = true;
+                        dp.value = j;
+                    }
+                }
+                Logger.LogInfo(exists);
+                if(!exists)
+                {
+                    dp.value = 0;
+                }
                 toggles.Add(toggle);
-
+                if(reset)
+                {
+                    layer++;
+                    level = 1;
+                }
+                else level++;
                 current++;
             }
         }
-        void ToggleMusic(bool value)
+        void ToggleMusic(Dropdown dp)
         {
-            string name = EventSystem.current.currentSelectedGameObject.name;
-            Logger.LogInfo("Toggled " + name + " to " + value);
-            if(musicEntries.ContainsKey(name))
-            {
-                musicEntries[name].Value = value;
-                musicDict[name] = value;
-            }
-            
+            currentSongPackDict[dp.name] = dp.captionText.text;
+            configs[dp.name].Value = dp.captionText.text;
+            Logger.LogInfo(configs[dp.name].Value);
         }
         void ToggleMenu()
         {
             isMenuOpen = !isMenuOpen;
             menu.SetActive(isMenuOpen);
         }
-        void Update()
+        IEnumerator ChangeSong(string level)
         {
-            if(isMenuOpen && Input.GetKeyDown(KeyCode.Escape) && isModEnabled)
+            string pack = currentSongPackDict[level];
+            string path = $"\\CustomMusic\\{pack}\\{level}";
+            if(!pack.Contains("None"))
             {
-                ToggleMenu();
-            }
-        }
-        IEnumerator ChangeSong(string name)
-        {
-            if(Directory.Exists(workDir + "\\CustomMusic\\" + name))
-            {
-                if(Directory.EnumerateFiles(workDir + "\\CustomMusic\\" + name).Any(file => file.EndsWith(".ogg") || file.EndsWith(".mp3") || file.EndsWith(".wav")) && musicDict[name])
+                if(Directory.Exists(workDir + path))
                 {
-                    string[] allFiles = Directory.GetFiles(workDir + "\\CustomMusic\\" + name);
-                    foreach(string file in allFiles)
+                    Logger.LogInfo("Exists");
+                    if(Directory.EnumerateFiles(workDir + path).Any(file => file.EndsWith(".ogg") || file.EndsWith(".mp3") || file.EndsWith(".wav")))
                     {
-                        AudioType type = AudioType.UNKNOWN;
-                        string typeName = Path.GetExtension(file);
-                        string target = "";
-                        if(file.Contains("clean"))
+                        Logger.LogInfo("Enumerate");
+                        string[] allFiles = Directory.GetFiles(workDir + path);
+                        foreach(string file in allFiles)
                         {
-                            target = "clean";
-                        }
-                        else if(file.Contains("battle"))
-                        {
-                            target = "battle";
-                        }
-                        else if(file.Contains("boss"))
-                        {
-                            target = "boss";
-                        }
-                        Logger.LogInfo(typeName);
-                        if(typeName.Contains("ogg"))
-                        {
-                            type = AudioType.OGGVORBIS;
-                        }
-                        else if(typeName.Contains("mp3"))
-                        {
-                            type = AudioType.MPEG;
-                        }
-                        else if(typeName.Contains("wav"))
-                        {
-                            type = AudioType.WAV;
-                        }
-                        UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(file,type);
-                        yield return request.SendWebRequest();
-                        if(request.isHttpError) Logger.LogError(request.error);
-                        else
-                        {
-                            if(target == "clean")
+                            AudioType type = AudioType.UNKNOWN;
+                            string typeName = Path.GetExtension(file);
+                            string target = "";
+                            if(file.Contains("clean"))
                             {
-                                music.cleanTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                target = "clean";
                             }
-                            else if(target == "battle")
+                            else if(file.Contains("battle"))
                             {
-                                music.battleTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                target = "battle";
                             }
-                            else if(target == "boss")
+                            else if(file.Contains("boss"))
                             {
-                                music.bossTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                target = "boss";
+                            }
+                            if(typeName.Contains("ogg"))
+                            {
+                                type = AudioType.OGGVORBIS;
+                            }
+                            else if(typeName.Contains("mp3"))
+                            {
+                                type = AudioType.MPEG;
+                            }
+                            else if(typeName.Contains("wav"))
+                            {
+                                type = AudioType.WAV;
+                            }
+                            UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(file,type);
+                            yield return request.SendWebRequest();
+                            if(request.isHttpError) Logger.LogError(request.error);
+                            else
+                            {
+                                if(target == "clean")
+                                {
+                                    music.cleanTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                }
+                                else if(target == "battle")
+                                {
+                                    music.battleTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                }
+                                else if(target == "boss")
+                                {
+                                    music.bossTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                }
                             }
                         }
+                    }
+                    else
+                    {
+                        Logger.LogInfo($"No music found in {pack}\\{level}");
                     }
                 }
                 else
                 {
-                    Logger.LogInfo("No music found in " + name);
+                    Logger.LogInfo($"No custom music found in {pack} for {level}");
                 }
             }
-            else
-            {
-                Logger.LogInfo("No custom music found for " + name);
-            }
+            
         }
     }
 }
