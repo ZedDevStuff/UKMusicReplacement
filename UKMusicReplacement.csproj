@@ -11,15 +11,19 @@
   <ItemGroup>
     <Reference Include="MyAssembly">
       <HintPath>lib\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>lib\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UKUIHelper">
       <HintPath>lib\UKUIHelper.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="TMPro">
       <HintPath>lib\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
 
