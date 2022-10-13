@@ -83,25 +83,6 @@ namespace UKMusicReplacement
             }
             firstInit = false;
         }
-        void Update()
-        {
-            if(Input.GetKeyDown(KeyCode.F1))
-            {
-                Logger.LogInfo(MusicManager.Instance.cleanTheme.clip.name);
-            }
-            if(Input.GetKeyDown(KeyCode.F2))
-            {
-                Logger.LogInfo(MusicManager.Instance.battleTheme.clip.name);
-            }
-            if(Input.GetKeyDown(KeyCode.F3))
-            {
-                Logger.LogInfo(MusicManager.Instance.bossTheme.clip.name);
-            }
-            if(Input.GetKeyDown(KeyCode.F4))
-            {
-                Logger.LogInfo(MusicManager.Instance.targetTheme.clip.name);
-            }
-        }
         
         void CheckScene(Scene scene,LoadSceneMode mode)
         {
