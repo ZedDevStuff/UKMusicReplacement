@@ -4,7 +4,7 @@ Ultrakill mod allowing users to use custom songs in regular (non boss or special
 
 # Installation
 
-To install, just unzip the [release you downloaded](https://github.com/ZedDevStuff/UKMusicReplacement/releases/latest) in your BepInEx plugins folder (or "UKMM Mods" if you use UKMM). Requires [UKUIHelper](https://github.com/ZedDevStuff/UKUIHelper/releases/latest) to work. The releases contain a custom song named "Stolen Heaven" for 4-1 and 4-2 by [triageGremlin](https://www.youtube.com/c/triageGremlin), but if you build the mod yourself, it won't come with any song.
+To install, just unzip the [release you downloaded](https://github.com/ZedDevStuff/UKMusicReplacement/releases/latest) in your BepInEx plugins folder (or "UKMM Mods" if you use UKMM). As of v0.8.0 (currently unreleased), no longer requires [UKUIHelper](https://github.com/ZedDevStuff/UKUIHelper/releases/latest) to work. The releases contain a custom song named "Stolen Heaven" for 4-1 and 4-2 by [triageGremlin](https://www.youtube.com/c/triageGremlin), but if you build the mod yourself, it won't come with any song.
 
 # How to add custom songs
 
