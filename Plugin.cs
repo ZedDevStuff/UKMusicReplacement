@@ -11,15 +11,16 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
-using UKUIHelper;
+using UKUIHelper_internal;
 
 namespace UKMusicReplacement
 {
-    [BepInPlugin("zed.uk.musicreplacement", "Ultrakill Music Replacement", "0.7.0")]
+    [BepInPlugin("zed.uk.musicreplacement", "Ultrakill Music Replacement", "0.8.0")]
     [BepInProcess("ULTRAKILL.exe")]
-    [BepInDependency("zed.uk.uihelper")]
     public class Plugin : BaseUnityPlugin
     {
+        public static Plugin current;
+        public UIHelper helper;
         GameObject menuCanvas,menu,menuButton,toggleTemplate;
         List<GameObject> toggles = new List<GameObject>();
         MusicManager music;
@@ -32,6 +33,8 @@ namespace UKMusicReplacement
         string workDir;
         private void Awake()
         {
+            helper = new UIHelper();
+            current = this;
             isEnabled = Config.Bind("General", "Enabled", true, "Enable/Disable the plugin");
             isModEnabled = isEnabled.Value;
             if(isEnabled.Value)
@@ -43,12 +46,24 @@ namespace UKMusicReplacement
             InitDict();
             Logger.LogInfo("Built Dict");
         }
+        void Update()
+        {
+            if(Input.GetKeyDown(KeyCode.LeftControl))
+            {
+                foreach(GameObject f in SceneManager.GetActiveScene().GetRootGameObjects())
+                {
+                    Logger.LogInfo(f.name);
+                }
+            }
+        }
         void InitDict()
         {
             songPackDict.Clear();
             int l = 0;
             int le = 1;
-            for(int i = 0;i < 25;i++)
+            songPackDict.Add($"CG", new List<string>());
+            configs["CG"] = Config.Bind($"Music CG", "Current music", "None", $"Sound pack used for Cybergrind");
+            for (int i = 0;i < 25;i++)
             {
                 string name;
                 bool reset = false;
@@ -103,7 +118,21 @@ namespace UKMusicReplacement
                     File.WriteAllText(workDir + "\\CustomMusic\\readme.txt","To add custom songs, create a folder with the name of your sound pack then another with the level name (i.e \"2-1\") and put your files in.\nRename them to \"clean\" and \"battle\" to make sure they are loaded correctly.\nAudio files need to be in .ogg, .mp3 or .wav to work.");
                 } 
             }
-            else if(name.Contains("Menu"))
+            else if(name.Contains("Endless") && changedSong == false)
+            {
+                changedSong = true;
+                if(Directory.Exists(workDir + "\\CustomMusic"))
+                {
+                    StartCoroutine(ChangeSong("CG"));
+                    changedSong = false;
+                }
+                else
+                {
+                    Directory.CreateDirectory(workDir + "\\CustomMusic");
+                    File.WriteAllText(workDir + "\\CustomMusic\\readme.txt", "To add custom songs, create a folder with the name of your sound pack then another with the level name (i.e \"2-1\") and put your files in.\nRename them to \"clean\" and \"battle\" to make sure they are loaded correctly.\nAudio files need to be in .ogg, .mp3 or .wav to work.");
+                }
+            }
+            else if (name.Contains("Menu"))
             {
                 StartCoroutine(InitMenu());
             }
@@ -124,7 +153,8 @@ namespace UKMusicReplacement
             menuCanvas = GameObject.Find("Main Menu (1)");
             yield return new WaitUntil(() => menuCanvas != null);
             Logger.LogInfo("Found Canvas...");
-            menuButton = UIHelper.CreateButton();
+            menuButton = helper.CreateButton(true);
+            
             menuButton.name = "Custom Music Button";
             menuButton.GetComponent<RectTransform>().SetParent(menuCanvas.GetComponent<RectTransform>());
             menuButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(520,-280);
@@ -140,7 +170,7 @@ namespace UKMusicReplacement
             menuButton.GetComponent<Button>().onClick.AddListener(() => ToggleMenu());
 
             //Menu creation;
-            menu = UIHelper.CreatePanel();
+            menu = helper.CreatePanel();
             menu.name = "Custom Music Menu";
             menu.GetComponent<RectTransform>().SetParent(menuCanvas.GetComponent<RectTransform>());
             menu.GetComponent<RectTransform>().pivot = new Vector2(0.5f,0.5f);
@@ -150,7 +180,7 @@ namespace UKMusicReplacement
             menu.GetComponent<Image>().color = new Color(1,1,1,1);
             menu.SetActive(false);
 
-            GameObject title = UIHelper.CreateText();
+            GameObject title = helper.CreateText();
             title.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
             title.GetComponent<RectTransform>().SetAnchor(AnchorPresets.HorStretchTop);
             title.GetComponent<RectTransform>().SetPivot(PivotPresets.TopLeft);
@@ -161,7 +191,7 @@ namespace UKMusicReplacement
             title.GetComponent<Text>().fontStyle = FontStyle.Bold;
             title.GetComponent<Text>().color = Color.black;
 
-            GameObject exit = UIHelper.CreateButton();
+            GameObject exit = helper.CreateButton();
             exit.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
             exit.GetComponent<RectTransform>().SetAnchor(AnchorPresets.TopRight);
             exit.GetComponent<RectTransform>().SetPivot(PivotPresets.TopRight);
@@ -173,7 +203,7 @@ namespace UKMusicReplacement
             exit.GetComponentInChildren<Text>().color = Color.white;
             exit.GetComponent<Button>().onClick.AddListener(() => ToggleMenu());
 
-            GameObject refresh = UIHelper.CreateButton();
+            GameObject refresh = helper.CreateButton();
             refresh.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
             refresh.GetComponent<RectTransform>().SetAnchor(AnchorPresets.BottomRight);
             refresh.GetComponent<RectTransform>().SetPivot(PivotPresets.BottomRight);
@@ -185,7 +215,7 @@ namespace UKMusicReplacement
             refresh.GetComponentInChildren<Text>().color = Color.white;
             refresh.GetComponent<Button>().onClick.AddListener(() => RefreshMenu());
 
-            GameObject desc = UIHelper.CreateText();
+            GameObject desc = helper.CreateText();
             desc.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
             desc.GetComponent<RectTransform>().SetAnchor(AnchorPresets.HorStretchTop);
             desc.GetComponent<RectTransform>().SetPivot(PivotPresets.TopCenter);
@@ -196,7 +226,7 @@ namespace UKMusicReplacement
             desc.GetComponent<Text>().color = Color.black;
             desc.GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Wrap;
 
-            toggleTemplate = UIHelper.CreateText();
+            toggleTemplate = helper.CreateText();
             toggleTemplate.GetComponent<RectTransform>().SetAnchor(AnchorPresets.TopLeft);
             toggleTemplate.GetComponent<RectTransform>().SetPivot(PivotPresets.TopLeft);
             toggleTemplate.GetComponent<RectTransform>().sizeDelta = new Vector2(60,40);
@@ -205,7 +235,7 @@ namespace UKMusicReplacement
             toggleTemplate.GetComponent<Text>().alignment = TextAnchor.MiddleLeft;
             toggleTemplate.GetComponent<Text>().color = Color.black;
 
-            GameObject dp = UIHelper.CreateDropdown();
+            GameObject dp = helper.CreateDropdown();
             dp.name = "Dropdown";
             dp.GetComponent<RectTransform>().SetParent(toggleTemplate.GetComponent<RectTransform>());
             dp.GetComponent<RectTransform>().SetAnchor(AnchorPresets.MiddleLeft);
@@ -241,7 +271,7 @@ namespace UKMusicReplacement
             int layer = 0;
             int level = 1;
             int current = 0;
-            for(int i = 1;i < 26;i++)
+            for (int i = 0;i < 26;i++)
             {
                 bool reset = false;
                 if(i == 10 || i == 20 || i == 30)
@@ -262,55 +292,101 @@ namespace UKMusicReplacement
                     reset = true;
                 }
                 string name = $"{layer}-{level}";
-                currentSongPackDict[name] = configs[name].Value;
-                //string val = "None";
-                // TODO: Check and restore previous settings
-                
-                GameObject toggle = Instantiate(toggleTemplate);
-                toggle.name = name;
-                toggle.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
-                toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check),-150 - (current * 50));
-                toggle.GetComponent<Text>().text = name;
-                toggle.GetComponentInChildren<Image>().color = new Color32(200,200,200,255);
-                Dropdown dp = toggle.GetComponentInChildren<Dropdown>();
-                dp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate {ToggleMusic(dp);});;
-                dp.name = name;
-                if(songPackDict[name].Count > 0)
+                if (current == 0 && layer == 0)
                 {
-                    foreach(string data in songPackDict[name])
+                    Logger.LogInfo("CSPD");
+                    currentSongPackDict["CG"] = configs["CG"].Value;
+                    Logger.LogInfo("Ok");
+                    GameObject toggle = Instantiate(toggleTemplate);
+                    toggle.name = "CG";
+                    toggle.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
+                    toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check), -150);
+                    toggle.GetComponent<Text>().text = "CG";
+                    toggle.GetComponentInChildren<Image>().color = new Color32(200, 200, 200, 255);
+                    Dropdown dp = toggle.GetComponentInChildren<Dropdown>();
+                    dp.onValueChanged.AddListener(delegate { ToggleMusic(dp); });
+                    dp.name = "CG";
+                    Logger.LogInfo("SPD If");
+                    if(songPackDict["CG"].Count > 0)
                     {
-                        dp.options.Add(new Dropdown.OptionData(data));
+                        Logger.LogInfo("Ok");
+                        Logger.LogInfo("Foreach");
+                        foreach (string data in songPackDict["CG"])
+                        {
+                            dp.options.Add(new Dropdown.OptionData(data));
+                        }
+                        Logger.LogInfo("Ok");
                     }
-                }
-                bool exists = false;
-                for(int j = 0;j < dp.options.Count;j++)
-                {
-                    if(dp.options[j].text == configs[name].Value)
+                    bool exists = false;
+                    for (int j = 0; j < dp.options.Count; j++)
                     {
-                        exists = true;
-                        dp.value = j;
+                        Logger.LogInfo("configs");
+                        if (dp.options[j].text == configs["CG"].Value)
+                        {
+                            exists = true;
+                            dp.value = j;
+                        }
+                        Logger.LogInfo("Ok");
                     }
+                    Logger.LogInfo(exists);
+                    if (!exists)
+                    {
+                        dp.value = 0;
+                    }
+                    toggles.Add(toggle);
+                    current++;
+                    Logger.LogInfo("After CG");
                 }
-                Logger.LogInfo(exists);
-                if(!exists)
+                else
                 {
-                    dp.value = 0;
+                    currentSongPackDict[name] = configs[name].Value;
+                    GameObject toggle = Instantiate(toggleTemplate);
+                    toggle.name = name;
+                    toggle.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
+                    toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check), -150 - (current * 50));
+                    toggle.GetComponent<Text>().text = name;
+                    toggle.GetComponentInChildren<Image>().color = new Color32(200, 200, 200, 255);
+                    Dropdown dp = toggle.GetComponentInChildren<Dropdown>();
+                    dp.onValueChanged.AddListener(delegate { ToggleMusic(dp); });
+                    dp.name = name;
+                    if (songPackDict[name].Count > 0)
+                    {
+                        foreach (string data in songPackDict[name])
+                        {
+                            dp.options.Add(new Dropdown.OptionData(data));
+                        }
+                    }
+                    bool exists = false;
+                    for (int j = 0; j < dp.options.Count; j++)
+                    {
+                        if (dp.options[j].text == configs[name].Value)
+                        {
+                            exists = true;
+                            dp.value = j;
+                        }
+                    }
+                    Logger.LogInfo(exists);
+                    if (!exists)
+                    {
+                        dp.value = 0;
+                    }
+                    toggles.Add(toggle);
+                    if (reset)
+                    {
+                        layer++;
+                        level = 1;
+                    }
+                    else level++;
+                    current++;
                 }
-                toggles.Add(toggle);
-                if(reset)
-                {
-                    layer++;
-                    level = 1;
-                }
-                else level++;
-                current++;
             }
+            Logger.LogInfo("Sucess");
         }
         void ToggleMusic(Dropdown dp)
         {
             currentSongPackDict[dp.name] = dp.captionText.text;
             configs[dp.name].Value = dp.captionText.text;
-            Logger.LogInfo(configs[dp.name].Value);
+            //Logger.LogInfo(configs[dp.name].Value);
         }
         void ToggleMenu()
         {
@@ -325,10 +401,10 @@ namespace UKMusicReplacement
             {
                 if(Directory.Exists(workDir + path))
                 {
-                    Logger.LogInfo("Exists");
+                    //Logger.LogInfo("Exists");
                     if(Directory.EnumerateFiles(workDir + path).Any(file => file.EndsWith(".ogg") || file.EndsWith(".mp3") || file.EndsWith(".wav")))
                     {
-                        Logger.LogInfo("Enumerate");
+                        //Logger.LogInfo("Enumerate");
                         string[] allFiles = Directory.GetFiles(workDir + path);
                         foreach(string file in allFiles)
                         {
@@ -366,15 +442,22 @@ namespace UKMusicReplacement
                             {
                                 if(target == "clean")
                                 {
+                                    if (isException(level))
+                                    {
+                                        Logger.LogInfo("Exception " + level);
+                                        if(level == "CG") CheckException(level, DownloadHandlerAudioClip.GetContent(request));
+                                        break;
+                                    }
                                     music.cleanTheme.clip = DownloadHandlerAudioClip.GetContent(request);
                                 }
                                 else if(target == "battle")
                                 {
+                                    if (isException(level)) break;
                                     music.battleTheme.clip = DownloadHandlerAudioClip.GetContent(request);
                                 }
                                 else if(target == "boss")
                                 {
-                                    music.bossTheme.clip = DownloadHandlerAudioClip.GetContent(request);
+                                    CheckException(level,DownloadHandlerAudioClip.GetContent(request));
                                 }
                             }
                         }
@@ -390,6 +473,51 @@ namespace UKMusicReplacement
                 }
             }
             
+        }
+        public bool isException(string level)
+        {
+            return level == "Cybergrind"|| level == "0-5" || level == "1-4" || level == "2-4" || level == "3-2" || level == "0-5" || level == "0-5";
+        }
+        public void CheckException(string level,AudioClip clip)
+        {
+            switch (level)
+            {
+                case "CG":
+                    SceneManager.GetActiveScene().GetRootGameObjects()[9].GetComponentsInChildren<Transform>(true)[0].GetComponentsInChildren<Transform>(true)[0].GetComponent<AudioSource>().clip = clip;
+                    SceneManager.GetActiveScene().GetRootGameObjects()[9].GetComponentsInChildren<Transform>(true)[0].GetComponentsInChildren<Transform>(true)[1].GetComponent<AudioSource>().clip = clip;
+                    break;
+                case "0-5":
+                    MusicCerberus(clip);
+                    break;
+                case "1-3":
+                    music.bossTheme.clip = clip;
+                    break;
+                case "1-4":
+                    MusicV2first(clip);
+                    break;
+                case "2-4":
+                    break;
+                case "3-2":
+                    break;
+                case "4-2":
+                    break;
+                case "4-4":
+                    break;
+                case "5-2":
+                    break;
+                case "5-4":
+                    break;
+                case "6-2":
+                    break;
+            }
+        }
+        public void MusicCerberus(AudioClip clip)
+        {
+            SceneManager.GetActiveScene().GetRootGameObjects()[3].GetComponentsInChildren<Transform>(true)[3].GetComponent<AudioSource>().clip = clip;
+        }
+        public void MusicV2first(AudioClip clip)
+        {
+            SceneManager.GetActiveScene().GetRootGameObjects()[6].GetComponent<AudioSource>().clip = clip;
         }
     }
 }
