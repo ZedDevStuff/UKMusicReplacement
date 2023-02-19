@@ -1,0 +1,18 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using HarmonyLib;
+using UnityEngine;
+
+namespace UKMusicReplacement
+{
+    public class Patch
+    {
+        [HarmonyPatch(typeof(AudioMixerController), "SetMusicVolume")]
+        [HarmonyPrefix]
+        static void SetMusicVolume(float volume)
+        {
+            
+        }
+    }
+}

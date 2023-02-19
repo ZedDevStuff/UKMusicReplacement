@@ -1,0 +1,14 @@
+﻿using UnityEngine;
+using UnityEngine.Audio;
+
+public class CustomAudio : MonoBehaviour 
+{
+    private AudioSource source;
+    void Init(AudioClip clip)
+    {
+        source = GetComponent<AudioSource>();
+        source.volume = AudioMixerController.Instance.musicVolume;
+        source.clip = clip;
+        source.playOnAwake = true;
+    }
+}

@@ -8,6 +8,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="CustomAudio.cs.bak" />
+    <None Remove="Patch.cs.bak" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="CustomAudio.cs.bak" />
+    <Compile Include="Patch.cs.bak" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="MyAssembly">
       <HintPath>lib\Assembly-CSharp.dll</HintPath>

@@ -1,17 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.IO;
-using System.Diagnostics;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
 using UKUIHelper_internal;
+
+// Sorry in advance to anyone looking into this code, nothing is documented and i don't even
+// remember why i did half the things i did, which means i would have to rewrite the entire 
+// mod to make it better.
 
 namespace UKMusicReplacement
 {
@@ -50,7 +51,7 @@ namespace UKMusicReplacement
         {
             if(Input.GetKeyDown(KeyCode.LeftControl))
             {
-                foreach(GameObject f in SceneManager.GetActiveScene().GetRootGameObjects())
+                foreach (GameObject f in SceneManager.GetActiveScene().GetRootGameObjects())
                 {
                     Logger.LogInfo(f.name);
                 }
@@ -118,7 +119,7 @@ namespace UKMusicReplacement
                     File.WriteAllText(workDir + "\\CustomMusic\\readme.txt","To add custom songs, create a folder with the name of your sound pack then another with the level name (i.e \"2-1\") and put your files in.\nRename them to \"clean\" and \"battle\" to make sure they are loaded correctly.\nAudio files need to be in .ogg, .mp3 or .wav to work.");
                 } 
             }
-            else if(name.Contains("Endless") && changedSong == false)
+            /*else if(name.Contains("Endless") && changedSong == false)
             {
                 changedSong = true;
                 if(Directory.Exists(workDir + "\\CustomMusic"))
@@ -131,7 +132,7 @@ namespace UKMusicReplacement
                     Directory.CreateDirectory(workDir + "\\CustomMusic");
                     File.WriteAllText(workDir + "\\CustomMusic\\readme.txt", "To add custom songs, create a folder with the name of your sound pack then another with the level name (i.e \"2-1\") and put your files in.\nRename them to \"clean\" and \"battle\" to make sure they are loaded correctly.\nAudio files need to be in .ogg, .mp3 or .wav to work.");
                 }
-            }
+            }*/
             else if (name.Contains("Menu"))
             {
                 StartCoroutine(InitMenu());
@@ -271,7 +272,7 @@ namespace UKMusicReplacement
             int layer = 0;
             int level = 1;
             int current = 0;
-            for (int i = 0;i < 26;i++)
+            for (int i = 1;i < 26;i++)
             {
                 bool reset = false;
                 if(i == 10 || i == 20 || i == 30)
@@ -292,15 +293,15 @@ namespace UKMusicReplacement
                     reset = true;
                 }
                 string name = $"{layer}-{level}";
-                if (current == 0 && layer == 0)
+
+                // This won't get called until I start i at 0
+                if(i == 0 && layer == 0)
                 {
-                    Logger.LogInfo("CSPD");
                     currentSongPackDict["CG"] = configs["CG"].Value;
-                    Logger.LogInfo("Ok");
                     GameObject toggle = Instantiate(toggleTemplate);
                     toggle.name = "CG";
                     toggle.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
-                    toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check), -150);
+                    toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check), -120);
                     toggle.GetComponent<Text>().text = "CG";
                     toggle.GetComponentInChildren<Image>().color = new Color32(200, 200, 200, 255);
                     Dropdown dp = toggle.GetComponentInChildren<Dropdown>();
@@ -326,7 +327,6 @@ namespace UKMusicReplacement
                             exists = true;
                             dp.value = j;
                         }
-                        Logger.LogInfo("Ok");
                     }
                     Logger.LogInfo(exists);
                     if (!exists)
@@ -335,7 +335,6 @@ namespace UKMusicReplacement
                     }
                     toggles.Add(toggle);
                     current++;
-                    Logger.LogInfo("After CG");
                 }
                 else
                 {
@@ -343,7 +342,7 @@ namespace UKMusicReplacement
                     GameObject toggle = Instantiate(toggleTemplate);
                     toggle.name = name;
                     toggle.GetComponent<RectTransform>().SetParent(menu.GetComponent<RectTransform>());
-                    toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check), -150 - (current * 50));
+                    toggle.GetComponent<RectTransform>().anchoredPosition = new Vector2(20 + (230 * check), -150 - (current * 30));
                     toggle.GetComponent<Text>().text = name;
                     toggle.GetComponentInChildren<Image>().color = new Color32(200, 200, 200, 255);
                     Dropdown dp = toggle.GetComponentInChildren<Dropdown>();
@@ -380,7 +379,6 @@ namespace UKMusicReplacement
                     current++;
                 }
             }
-            Logger.LogInfo("Sucess");
         }
         void ToggleMusic(Dropdown dp)
         {
@@ -442,12 +440,15 @@ namespace UKMusicReplacement
                             {
                                 if(target == "clean")
                                 {
-                                    if (isException(level))
+                                    /*if(isException(level))
                                     {
-                                        Logger.LogInfo("Exception " + level);
-                                        if(level == "CG") CheckException(level, DownloadHandlerAudioClip.GetContent(request));
+                                        if(level == "CG")
+                                        {
+                                            CheckException("CG", DownloadHandlerAudioClip.GetContent(request));
+                                        }
                                         break;
                                     }
+                                    else*/
                                     music.cleanTheme.clip = DownloadHandlerAudioClip.GetContent(request);
                                 }
                                 else if(target == "battle")
@@ -457,7 +458,9 @@ namespace UKMusicReplacement
                                 }
                                 else if(target == "boss")
                                 {
+                                    Logger.LogInfo("Before GetContent");
                                     CheckException(level,DownloadHandlerAudioClip.GetContent(request));
+                                    Logger.LogInfo("After GetContent");
                                 }
                             }
                         }
@@ -476,16 +479,19 @@ namespace UKMusicReplacement
         }
         public bool isException(string level)
         {
-            return level == "Cybergrind"|| level == "0-5" || level == "1-4" || level == "2-4" || level == "3-2" || level == "0-5" || level == "0-5";
+            return /*level == "CG"||*/ level == "0-5" || level == "1-4" || level == "2-4" || level == "3-2" || level == "0-5" || level == "0-5";
         }
         public void CheckException(string level,AudioClip clip)
         {
-            switch (level)
+            Logger.LogInfo("Exception " + level);
+            switch(level)
             {
-                case "CG":
+                /*case "CG":
+                    // For now i'm giving up on CG, will be included in another update.
+                    Destroy(SceneManager.GetActiveScene().GetRootGameObjects()[9].GetComponentsInChildren<Transform>(true)[0].gameObject);
                     SceneManager.GetActiveScene().GetRootGameObjects()[9].GetComponentsInChildren<Transform>(true)[0].GetComponentsInChildren<Transform>(true)[0].GetComponent<AudioSource>().clip = clip;
                     SceneManager.GetActiveScene().GetRootGameObjects()[9].GetComponentsInChildren<Transform>(true)[0].GetComponentsInChildren<Transform>(true)[1].GetComponent<AudioSource>().clip = clip;
-                    break;
+                    break;*/
                 case "0-5":
                     MusicCerberus(clip);
                     break;
@@ -493,15 +499,22 @@ namespace UKMusicReplacement
                     music.bossTheme.clip = clip;
                     break;
                 case "1-4":
-                    MusicV2first(clip);
+                    MusicV2First(clip);
                     break;
                 case "2-4":
+                    MusicCorpseMinos(clip);
                     break;
                 case "3-2":
+                    MusicGabriel(clip);
                     break;
                 case "4-2":
+                    music.bossTheme.clip = clip;
+                    break;
+                // This one is a bit weird, it won't be in 0.8.0
+                case "4-3":
                     break;
                 case "4-4":
+                    MusicV2Second(clip);
                     break;
                 case "5-2":
                     break;
@@ -511,13 +524,26 @@ namespace UKMusicReplacement
                     break;
             }
         }
+        // I could get rid of those methods and put them in CheckException but we never know so i made them anyways
         public void MusicCerberus(AudioClip clip)
         {
             SceneManager.GetActiveScene().GetRootGameObjects()[3].GetComponentsInChildren<Transform>(true)[3].GetComponent<AudioSource>().clip = clip;
         }
-        public void MusicV2first(AudioClip clip)
+        public void MusicV2First(AudioClip clip)
         {
             SceneManager.GetActiveScene().GetRootGameObjects()[6].GetComponent<AudioSource>().clip = clip;
+        }
+        public void MusicCorpseMinos(AudioClip clip)
+        {
+            SceneManager.GetActiveScene().GetRootGameObjects()[0].GetComponentsInChildren<AudioSource>(true)[5].clip = clip;
+        }
+        public void MusicGabriel(AudioClip clip)
+        {
+            SceneManager.GetActiveScene().GetRootGameObjects()[3].GetComponent<AudioSource>().clip = clip;
+        }
+        public void MusicV2Second(AudioClip clip)
+        {
+            SceneManager.GetActiveScene().GetRootGameObjects()[12].GetComponent<AudioSource>().clip = clip;
         }
     }
 }
