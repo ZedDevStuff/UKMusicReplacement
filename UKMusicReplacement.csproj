@@ -27,10 +27,6 @@
       <HintPath>lib\UnityEngine.UI.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="TMPro">
-      <HintPath>lib\Unity.TextMeshPro.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +41,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Folder Include="lib\" />
     <Folder Include="Sprites\" />
   </ItemGroup>
   

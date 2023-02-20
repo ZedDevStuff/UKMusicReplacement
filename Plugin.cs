@@ -510,13 +510,14 @@ namespace UKMusicReplacement
                 case "4-2":
                     music.bossTheme.clip = clip;
                     break;
-                // This one is a bit weird, it won't be in 0.8.0
+                // This one is a bit weird, if you know how to make it work, feel from to make a PR
                 case "4-3":
                     break;
                 case "4-4":
                     MusicV2Second(clip);
                     break;
                 case "5-2":
+                    //Ferryman is complicated so i won't touch it for now. it uses 4 different songs, one for phase 1, the break, phase 2 and the end when you defeat him
                     break;
                 case "5-4":
                     break;
