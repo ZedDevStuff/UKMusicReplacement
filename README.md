@@ -1,3 +1,5 @@
+# This mod is now archived and deprecated in favor of USTManager which should release anywhere between January 1st and 3rd 
+
 # Update: As of v0.8.0 (currently unreleased), no longer requires [UKUIHelper](https://github.com/ZedDevStuff/UKUIHelper/releases/latest) to work
 
 # UKMusicReplacement
