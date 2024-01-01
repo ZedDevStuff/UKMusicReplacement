@@ -1,4 +1,4 @@
-# This mod is now archived and deprecated in favor of [USTManager](https://github.com/ZedDevStuff/USTManager) which should release anywhere between January 1st and 3rd (the repo will be prvate until then so the link won't get you anywhere)
+# This mod is now archived and deprecated in favor of [USTManager](https://github.com/ZedDevStuff/USTManager) which should release anywhere between January 1st and 3rd (the repo will be private until then so the link won't get you anywhere)
 
 # Update: As of v0.8.0 (currently unreleased), no longer requires [UKUIHelper](https://github.com/ZedDevStuff/UKUIHelper/releases/latest) to work
 
